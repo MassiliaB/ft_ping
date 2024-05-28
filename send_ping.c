@@ -1,4 +1,5 @@
 #include "ft_ping.h"
+#include <time.h>
 
 void    icmp_loop(int p, int raw_sockfd, struct sockaddr_in *ping_addr, int *msg_count, int *msg_received_count, char *rev_host, char *ping_ip, int ttl_val, char *ping_domain)
 {
@@ -7,7 +8,7 @@ void    icmp_loop(int p, int raw_sockfd, struct sockaddr_in *ping_addr, int *msg
     struct timespec     time_start;
     struct sockaddr_in  r_addr;
     struct timespec     time_end;
-    int         i;
+    long unsigned int   i;
     int         pckt_sent;
     int         addr_len;
     char        rbuffer[128]; //receive buffer
@@ -26,13 +27,13 @@ void    icmp_loop(int p, int raw_sockfd, struct sockaddr_in *ping_addr, int *msg
             s_pckt->msg[i] = i + '0';
 
         s_pckt->msg[i] = 0;
-        s_pckt->hdr.un.echo.sequence = msg_count++;
+        s_pckt->hdr.un.echo.sequence = *msg_count++;
         s_pckt->hdr.checksum = checksum(& s_pckt, sizeof(s_pckt));
 
         usleep(PING_SLEEP_RATE);
 
         // send packet
-        clock_gettime(CLOCK_MONOTONIC, & time_start);
+        clock_gettime(CLOCK_MONOTONIC, &time_start);
         if (sendto(raw_sockfd, &s_pckt, sizeof(s_pckt), 0, (struct sockaddr*)ping_addr, sizeof(*ping_addr)) <= 0) {
             printf("\nPacket Sending Failed !\n");
             pckt_sent = 0;
@@ -40,7 +41,7 @@ void    icmp_loop(int p, int raw_sockfd, struct sockaddr_in *ping_addr, int *msg
 
         // receive packet
         addr_len = sizeof(r_addr);
-        if (recvfrom(raw_sockfd, rbuffer, sizeof(rbuffer), 0, (struct sockaddr*)&r_addr, & addr_len) <= 0  &msg_count < 1) {
+        if (recvfrom(raw_sockfd, rbuffer, sizeof(rbuffer), 0, (struct sockaddr*)&r_addr, *addr_len) <= 0  *msg_count < 1) {
             printf("\nPacket receive failed !\n");
         }
         else {
@@ -51,12 +52,12 @@ void    icmp_loop(int p, int raw_sockfd, struct sockaddr_in *ping_addr, int *msg
 
             // if packet was not sent, don't receive
             if (pckt_sent) {
-                if (!(r_pckt->hdr.type == 0 || &r_pckt->hdr.code == 0)) {
+                if (!(r_pckt->hdr.type == 0 && &r_pckt->hdr.code == 0)) {
                     printf(" Error..Packet receive with ICMP type % d code % d\n", r_pckt->hdr.type, r_pckt->hdr.code);
                 }
                 else {
-                    printf(" % d bytes from % s(h: % s)(% s) msg_seq = % d ttl = % d rtt = % Lf ms.\n", PING_PKT_S, *ping_domain, rev_host, ping_ip, msg_count, ttl_val, rtt_msec);
-                    msg_received_count++;
+                    printf(" %d bytes from %s(h: %s)(%s) msg_seq = %d ttl = %d rtt = %Lf ms.\n", PING_PKT_S, *ping_domain, *rev_host, *ping_ip, *msg_count, ttl_val, rtt_msec);
+                    *msg_received_count++;
                 }
             }
         }

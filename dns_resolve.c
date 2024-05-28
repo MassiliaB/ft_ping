@@ -9,9 +9,9 @@ char    *dns_lookup(char *hostname, struct sockaddr_in *addr_connexion)
     int             i;
 
     ip = (char*)malloc(NI_MAXHOST * sizeof(char));
-    if ((host_entity = gethostbyname(hostname)) == NULL) {
+    if (!(host_entity = gethostbyname(hostname))) {
         printf("No IP found for hostname\n ");
-        return NULL;
+        return 0;
     }
  
     // filling up address structure

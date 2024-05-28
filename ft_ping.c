@@ -1,6 +1,6 @@
 #include "ft_ping.h"
 
-void intHandler(int handle) // When CTRL + C is pressed, ping send a report and set the pingloop to false.
+void intHandler() // When CTRL + C is pressed, ping send a report and set the pingloop to false.
 {
     pingloop = 0;
 }
@@ -23,9 +23,9 @@ int main(int ac, char **av)
 {
     int     sockfd;
     struct  sockaddr_in addr_con; // ? 
-    int     addrlen;
-    char    net_buf[NI_MAXHOST];
-    char    *options;
+  //  int     addrlen;
+   // char    net_buf[NI_MAXHOST];
+  //  char    *options;
     char    *ip_addr;
     char    *reverse_hostname; // To convert ip addr to hostname
 
@@ -33,14 +33,14 @@ int main(int ac, char **av)
         printf("usage: ping [-v][-?] ‹Hostname or IP>\n");
         return 0;
     }
-    addrlen = sizeof(addr_con);
+  //  addrlen = sizeof(addr_con);
     if (!(ip_addr = dns_lookup(av[1], &addr_con))){
         printf("\nDNS lookup failed !Could not resolve hostname !\n");
         return 0;
     }
     reverse_hostname = reverse_dns_lookup(ip_addr);
-    printf("\nTrying to connect to '%s' IP: % s\n", av[1], ip_addr);
-    printf("\nReverse Lookup domain: % s", reverse_hostname);
+    printf("\nTrying to connect to '%s' IP: %s\n", av[1], ip_addr);
+    printf("\nReverse Lookup domain: %s", reverse_hostname);
  
     if ((sockfd = open_rawsock()) < 0)
         return -1;
