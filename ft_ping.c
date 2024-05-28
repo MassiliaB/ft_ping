@@ -23,8 +23,6 @@ int main(int ac, char **av)
 {
     int     sockfd;
     struct  sockaddr_in addr_con; // ? 
-  //  int     addrlen;
-   // char    net_buf[NI_MAXHOST];
   //  char    *options;
     char    *ip_addr;
     char    *reverse_hostname; // To convert ip addr to hostname
@@ -33,7 +31,6 @@ int main(int ac, char **av)
         printf("usage: ping [-v][-?] ‹Hostname or IP>\n");
         return 0;
     }
-  //  addrlen = sizeof(addr_con);
     if (!(ip_addr = dns_lookup(av[1], &addr_con))){
         printf("\nDNS lookup failed !Could not resolve hostname !\n");
         return 0;

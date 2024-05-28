@@ -1,7 +1,7 @@
 #include "ft_ping.h"
 #include <time.h>
 
-void    icmp_loop(int p, int raw_sockfd, struct sockaddr_in *ping_addr, int *msg_count, int *msg_received_count, char *rev_host, char *ping_ip, int ttl_val, char *ping_domain)
+void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, int *msg_count, int *msg_received_count, char *argv, char *ip_addr, int ttl_val, char *ping_domain)
 {
     struct icmp_packet     *r_pckt;
     struct icmp_packet    *s_pckt;
@@ -28,7 +28,7 @@ void    icmp_loop(int p, int raw_sockfd, struct sockaddr_in *ping_addr, int *msg
 
         s_pckt->msg[i] = 0;
         s_pckt->hdr.un.echo.sequence = *msg_count++;
-        s_pckt->hdr.checksum = checksum(& s_pckt, sizeof(s_pckt));
+        s_pckt->hdr.checksum = checksum(&s_pckt, sizeof(s_pckt));
 
         usleep(PING_SLEEP_RATE);
 
@@ -41,22 +41,22 @@ void    icmp_loop(int p, int raw_sockfd, struct sockaddr_in *ping_addr, int *msg
 
         // receive packet
         addr_len = sizeof(r_addr);
-        if (recvfrom(raw_sockfd, rbuffer, sizeof(rbuffer), 0, (struct sockaddr*)&r_addr, *addr_len) <= 0  *msg_count < 1) {
+        if (recvfrom(raw_sockfd, rbuffer, sizeof(rbuffer), 0, (struct sockaddr*)&r_addr, &addr_len) <= 0 && *msg_count > 1) {
             printf("\nPacket receive failed !\n");
         }
         else {
-            clock_gettime(CLOCK_MONOTONIC, & time_end);
+            clock_gettime(CLOCK_MONOTONIC, &time_end);
 
             double timeElapsed = ((double)(time_end.tv_nsec - time_start.tv_nsec)) / 1000000.0;
             rtt_msec = (time_end.tv_sec - time_start.tv_sec) * 1000.0 + timeElapsed;
 
             // if packet was not sent, don't receive
             if (pckt_sent) {
-                if (!(r_pckt->hdr.type == 0 && &r_pckt->hdr.code == 0)) {
+                if (!(r_pckt->hdr.type == 0 && r_pckt->hdr.code == 0)) {
                     printf(" Error..Packet receive with ICMP type % d code % d\n", r_pckt->hdr.type, r_pckt->hdr.code);
                 }
                 else {
-                    printf(" %d bytes from %s(h: %s)(%s) msg_seq = %d ttl = %d rtt = %Lf ms.\n", PING_PKT_S, *ping_domain, *rev_host, *ping_ip, *msg_count, ttl_val, rtt_msec);
+                    printf(" %d bytes from %s(h: %s)(%s) msg_seq = %d ttl = %d rtt = %Lf ms.\n", PING_PKT_S, *ping_domain, *argv, *ip_addr, *msg_count, ttl_val, rtt_msec);
                     *msg_received_count++;
                 }
             }
@@ -64,7 +64,7 @@ void    icmp_loop(int p, int raw_sockfd, struct sockaddr_in *ping_addr, int *msg
     }
 }
 
-void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_domain, char *ping_ip, char *rev_host)
+void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_domain, char *ip_addr, char *argv)
 {
     struct timespec     tfs;
     struct timespec     tfe;
@@ -93,12 +93,12 @@ void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_doma
     setsockopt(raw_sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv_out, sizeof tv_out);
  
     // send icmp packet in an infinite loop
-    icmp_loop(pingloop, raw_sockfd, &ping_addr, &msg_count, &msg_received_count, &rev_host, &ping_ip, ttl_val, ping_domain);
+    icmp_loop(raw_sockfd, ping_addr, &msg_count, &msg_received_count, argv, ip_addr, ttl_val, ping_domain);
 
     clock_gettime(CLOCK_MONOTONIC, &tfe);
     timeElapsed = ((double)(tfe.tv_nsec - tfs.tv_nsec)) / 1000000.0;
     total_msec = (tfe.tv_sec - tfs.tv_sec) * 1000.0 + timeElapsed;
-    printf("\n == = %s ping statistics ===\n", ping_ip);
-    printf("\n %d packets sent, %d packets received, %f percent packet loss.Total time: %Lf ms.\n\n", *msg_count, msg_received_count, ((*msg_count - *msg_received_count) / *msg_count) * 100.0, total_msec);
+    printf("\n == = %s ping statistics ===\n", ip_addr);
+    printf("\n %d packets sent, %d packets received, %f percent packet loss.Total time: %Lf ms.\n\n", *msg_count, *msg_received_count, ((*msg_count - *msg_received_count) / *msg_count) * 100.0, total_msec);
 }
  
