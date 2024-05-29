@@ -3,13 +3,15 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
-//#include <netdb.h>
+#include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <netpacket/packet.h>
+#include <errno.h>
 //#include <linux/time.h>
 //#include <ip.h>
 
@@ -20,16 +22,15 @@
 #define NI_MAXHOST      1025
 #define NI_MAXSERV      32
 
-int pingloop = 1;
-
-// The ICMP Packet Structure
+// Tshe ICMP Packet Structure
 struct icmp_packet {
-    struct ethhdr *eth; //Ethernet header
-    struct ip *ip;	//IP header 
-    struct icmphdr hdr; //ICMP header
-    char msg[PING_PKT_S-sizeof(struct icmphdr)]; //Junk payload 
+    struct ethhdr   *eth; //Ethernet header
+    struct ip       *ip;	//IP header 
+    struct icmphdr  hdr; //ICMP header
+    char            msg[PING_PKT_S-sizeof(struct icmphdr)]; //Junk payload 
 };
 
 char    *reverse_dns_lookup(char *ip_addr);
 char    *dns_lookup(char *hostname, struct sockaddr_in *addr_connexion);
 void    send_ping(int raw_sockfd, struct sockaddr_in *addr_con, char *ping_domain, char *ping_ip, char *rev_host);
+void    intHandler();

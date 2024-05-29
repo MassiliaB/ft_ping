@@ -23,5 +23,6 @@ fclean: clean
 	${RM} ${NAME} 
 
 re: fclean all
+	echo `clear`
 
 .PHONY: all clean fclean re

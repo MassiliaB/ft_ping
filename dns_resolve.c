@@ -3,10 +3,8 @@
 // Performs a DNS lookup
 char    *dns_lookup(char *hostname, struct sockaddr_in *addr_connexion)
 {
-    printf("\nResolving DNS\n ");
     struct hostent  *host_entity;
     char            *ip;
-    int             i;
 
     ip = (char*)malloc(NI_MAXHOST * sizeof(char));
     if (!(host_entity = gethostbyname(hostname))) {
@@ -19,13 +17,13 @@ char    *dns_lookup(char *hostname, struct sockaddr_in *addr_connexion)
     (*addr_connexion).sin_family = host_entity->h_addrtype;
     (*addr_connexion).sin_port = htons(PORT_NO);
     (*addr_connexion).sin_addr.s_addr = *(long*)host_entity->h_addr;
+    printf("Resolving DNS : %s\n", ip);
     return ip;
 }
 
 // Resolves the reverse lookup of the hostname
 char    *reverse_dns_lookup(char *ip_addr)
 {
-    printf("\nReverse DNS\n ");
     struct sockaddr_in  temp_addr;
     socklen_t           len;
     char                buf[NI_MAXHOST];
@@ -42,5 +40,6 @@ char    *reverse_dns_lookup(char *ip_addr)
     }
     ret_buf = (char*)malloc((strlen(buf) + 1) * sizeof(char));
     strcpy(ret_buf, buf);
+    printf("Resverse DNS : %s\n", ret_buf);
     return ret_buf;
 }
