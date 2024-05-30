@@ -22,13 +22,6 @@
 #define NI_MAXHOST      1025
 #define NI_MAXSERV      32
 
-// The ICMP Packet Structure
-struct icmp_packet {
-    struct ip       *ip;	//IP header 
-    struct icmp     hdr; //ICMP header
-    char            msg[PING_PKT_S-sizeof(struct icmp)]; //Junk payload 
-};
-
 char    *reverse_dns_lookup(char *ip_addr);
 char    *dns_lookup(char *hostname, struct sockaddr_in *addr_connexion);
 void    send_ping(int raw_sockfd, struct sockaddr_in *addr_con, char *ping_domain, char *ping_ip, char *rev_host);

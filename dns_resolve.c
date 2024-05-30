@@ -1,7 +1,7 @@
 #include "ft_ping.h"
 
 // Performs a DNS lookup
-char    *dns_lookup(char *hostname, struct sockaddr_in *addr_connexion)
+char    *dns_lookup(char *hostname, struct sockaddr_in *ping_addr)
 {
     struct hostent  *host_entity;
     char            *ip;
@@ -14,9 +14,9 @@ char    *dns_lookup(char *hostname, struct sockaddr_in *addr_connexion)
  
     // filling up address structure
     strcpy(ip, inet_ntoa(*(struct in_addr*)host_entity->h_addr));
-    (*addr_connexion).sin_family = host_entity->h_addrtype;
-    (*addr_connexion).sin_port = htons(PORT_NO);
-    (*addr_connexion).sin_addr.s_addr = *(long*)host_entity->h_addr;
+    (*ping_addr).sin_family = host_entity->h_addrtype;
+    (*ping_addr).sin_port = htons(PORT_NO);
+    (*ping_addr).sin_addr.s_addr = *(long*)host_entity->h_addr;
     printf("Resolving DNS : %s\n", ip);
     return ip;
 }
