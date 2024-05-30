@@ -7,11 +7,11 @@ void intHandler() // When CTRL + C is pressed, ping send a report and set the pi
     pingloop = 0;
 }
 
-unsigned short checksum(void *addr, int len)
+unsigned short checksum(void *addr, int len) //Used for error checking of the header
 {
     unsigned short *buf = addr;
-    unsigned int sum = 0;
     unsigned short result;
+    unsigned int sum = 0;
  
     for (sum = 0; len > 1; len -= 2)
         sum += *buf++;
@@ -21,6 +21,12 @@ unsigned short checksum(void *addr, int len)
     sum += (sum >> 16);
     result = ~sum;
     return result;
+}
+
+int receive_packet(int msg_received_count)
+{
+
+    return msg_received_count;
 }
 
 void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec *tfs, struct timespec *tfe, char *argv, char *ip_addr, int ttl_val, char *ping_domain)
@@ -34,7 +40,7 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
     int                 pckt_sent;
     int                 msg_count;
     int                 msg_received_count;
-  //  char        rbuffer[128]; //receive buffer
+    char        r_buffer[400]; //receive buffer
     long double rtt_msec;
     long double total_msec;
     double      timeElapsed;
@@ -45,34 +51,32 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
     msg_count = 0;
     msg_received_count = 0;
 
+    memset(r_buffer, 0, sizeof(r_buffer));
+
     while (pingloop) {
         pckt_sent = 1; //was a packet sent or not
         bzero(&s_pckt, sizeof(s_pckt)); // filling packet
     printf("here 2\n");
 
-        s_pckt->hdr.type = ICMP_ECHO;
-        s_pckt->hdr.un.echo.id = getpid();
-        for (i = 0; i < sizeof(s_pckt->msg) - 1; i++)
-            s_pckt->msg[i] = i + '0';
+        s_pckt->hdr.icmp_type = ICMP_ECHO; // Message Type (8 bits)
+        s_pckt->hdr.icmp_code = 0; // Message Code (8 bits): echo request
+        s_pckt->hdr.icmp_id = getpid(); // Identifier (16 bits): some number to trace the response
+        s_pckt->hdr.icmp_seq = msg_count++; // Sequence Number (16 bits): starts at 0
+        s_pckt->hdr.icmp_cksum = checksum(&s_pckt, sizeof(s_pckt));
     printf("here 3\n");
-
-        s_pckt->msg[i] = 0;
-        s_pckt->hdr.un.echo.sequence = msg_count++;
-        s_pckt->hdr.checksum = checksum(&s_pckt, sizeof(s_pckt));
-
         usleep(PING_SLEEP_RATE);
     printf("here 4\n");
 
         // send packet
         clock_gettime(CLOCK_MONOTONIC, &time_start);
-        if (sendto(raw_sockfd, &s_pckt, sizeof(s_pckt), 0, (struct sockaddr*)ping_addr, sizeof(*ping_addr)) <= 0) {
+        if (sendto(raw_sockfd, &s_pckt, sizeof(s_pckt), 0, (struct sockaddr*)ping_addr, sizeof(*ping_addr)) < 0) {
             printf("\nPacket Sending Failed !\n");
             pckt_sent = 0;
         }
     printf("here 5\n");
 
         // receive packet
-        if (recvfrom(raw_sockfd, &r_pckt, sizeof(r_pckt), 0, (struct sockaddr*)&r_addr, (socklen_t*)(sizeof(r_addr))) <= 0 && msg_count > 1) {
+        if (recvfrom(raw_sockfd, r_buffer, sizeof(r_buffer), 0, (struct sockaddr*)&r_addr, (socklen_t*)(sizeof(r_addr))) < 0 && msg_count > 1) {
             printf("\nPacket receive failed !\n");
         }
         else {
@@ -83,7 +87,7 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
 
             // if packet was not sent, don't receive
             if (pckt_sent) {
-                if (!(r_pckt->hdr.type == 0 && r_pckt->hdr.code == 0)) {
+                if (!(r_pckt->hdr.icmp_type == 0 && r_pckt->hdr.icmp_code == 0)) {
                     printf(" Error..Packet receive with ICMP type % d code % d\n", r_pckt->hdr.type, r_pckt->hdr.code);
                 }
                 else {

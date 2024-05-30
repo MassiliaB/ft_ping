@@ -22,12 +22,11 @@
 #define NI_MAXHOST      1025
 #define NI_MAXSERV      32
 
-// Tshe ICMP Packet Structure
+// The ICMP Packet Structure
 struct icmp_packet {
-    struct ethhdr   *eth; //Ethernet header
     struct ip       *ip;	//IP header 
-    struct icmphdr  hdr; //ICMP header
-    char            msg[PING_PKT_S-sizeof(struct icmphdr)]; //Junk payload 
+    struct icmp     hdr; //ICMP header
+    char            msg[PING_PKT_S-sizeof(struct icmp)]; //Junk payload 
 };
 
 char    *reverse_dns_lookup(char *ip_addr);

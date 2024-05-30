@@ -22,6 +22,11 @@ int main(int ac, char **av)
     char    *ip_addr;
     char    *reverse_hostname; // To convert ip addr to hostname
 
+    // Check for root access
+    if (getuid() != 0){
+        printf("This program requires root privileges!\n");
+        return 0;
+    }
     if (ac < 2 || ac > 3){
         printf("usage: ping [-v][-?] ‹Hostname or IP>\n");
         return 0;
