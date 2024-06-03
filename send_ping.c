@@ -33,7 +33,7 @@ int receive_packet(int msg_received_count)
 void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec *tfs, struct timespec *tfe, char *argv, char *ip_addr, int ttl_val, char *ping_domain)
 {
     struct icmp   *hdr_s_pckt; //ICMP header
- //   struct icmp   hdr_r_pckt;
+    struct icmp   *hdr_r_pckt;
     struct timespec     time_start;
     struct sockaddr_in  r_addr;
     struct timespec     time_end;
@@ -71,9 +71,7 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
             printf("Packet sent error : %s\n", strerror(errno));
             pckt_sent = 0;
         }
-
        // bzero(&hdr_r_pckt, sizeof(hdr_r_pckt));
-
         // receive packet
         if (recvfrom(raw_sockfd, r_buffer, sizeof(r_buffer), 0, (struct sockaddr*)&r_addr, (socklen_t*)(sizeof(r_addr))) < 0 && msg_count > 1) {
             printf("Packet received error : %s\n", strerror(errno));
@@ -84,9 +82,14 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
             double timeElapsed = ((double)(time_end.tv_nsec - time_start.tv_nsec)) / 1000000.0;
             rtt_msec = (time_end.tv_sec - time_start.tv_sec) * 1000.0 + timeElapsed;
 
+            hdr_r_pckt = (struct icmp*)(r_buffer + (socklen_t*)(sizeof(r_addr)));
             if (pckt_sent) {
-                printf("%d bytes from %s (%s): icmp seq=%d ttl=%d time=%Lf ms\n", PING_PKT_S, ping_domain, ip_addr, msg_count, ttl_val, rtt_msec);
-                msg_received_count++;
+                if (!(hdr_r_pckt->icmp_type == ICMP_ECHOREPLY) && (hdr_r_pckt->icmp_id == getpid()))
+                        printf("Packet sent error : %s\n", strerror(errno));
+                else {
+                    printf("%d bytes from %s (%s): icmp seq=%d ttl=%d time=%Lf ms\n", PING_PKT_S, ping_domain, ip_addr, msg_count, ttl_val, rtt_msec);
+                    msg_received_count++;
+                }
             }
         }
     }
