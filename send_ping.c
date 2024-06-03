@@ -1,8 +1,8 @@
 #include "ft_ping.h"
 #include <time.h>
 int pingloop = 1;
-const char        s_packet[DATALEN + IPMAXLEN + ICMPMAXLEN];
-const char        r_packet[DATALEN + IPMAXLEN + ICMPMAXLEN];
+char        s_packet[DATALEN + IPMAXLEN + ICMPMAXLEN];
+char        r_packet[DATALEN + IPMAXLEN + ICMPMAXLEN];
 
 void intHandler() // When CTRL + C is pressed, ping send a report and set the pingloop to false.
 {
@@ -68,9 +68,9 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
         pckt_sent = send_packet(msg_count, raw_sockfd, ping_addr, &time_start);
         msg_count++;
 
-        printf("is that okay ?\n");
+        printf("is that okay ? count = %d\n", msg_count);
 
-        while (1)
+        while (pingloop)
         {
             struct sockaddr_in  r_addr;
             memset(r_packet, 0, sizeof(&r_packet));
@@ -87,6 +87,7 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
                     else {
                         printf("%d bytes from %s (%s): icmp seq=%d ttl=%d time=%Lf ms\n", PING_PKT_S, ping_domain, ip_addr, msg_count, ttl_val, rtt_msec);
                         msg_received_count++;
+                        break ;
                     }
                 }
             }
@@ -124,7 +125,7 @@ void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_doma
     // setting timeout of recv setting
     setsockopt(raw_sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv_out, sizeof tv_out);
 
-    printf("PING %s(%s): %d bytes of data.\n", argv, ip_addr, datalen);
+    printf("PING %s(%s): %d bytes of data.\n", argv, ip_addr, DATALEN);
 
     // send icmp packet in an infinite loop
     icmp_loop(raw_sockfd, ping_addr, &tfs, &tfe, argv, ip_addr, ttl_val, ping_domain);
