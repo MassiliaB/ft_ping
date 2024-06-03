@@ -10,7 +10,7 @@ int open_rawsock()
         printf("Error creating socket : %s\n", strerror(errno));
         return -1;
     }
-    printf("Socket file descriptor %d received\n", sockfd);
+ //   printf("Socket file descriptor %d received\n", sockfd);
     return sockfd;
 }
 
@@ -36,8 +36,8 @@ int main(int ac, char **av)
         return 0;
     }
     reverse_hostname = reverse_dns_lookup(ip_addr);
-    printf("Trying to connect to '%s' IP: %s\n", av[1], ip_addr);
-    printf("Reverse Lookup domain: %s\n", reverse_hostname);
+ //   printf("Trying to connect to '%s' IP: %s\n", av[1], ip_addr);
+  //  printf("Reverse Lookup domain: %s\n", reverse_hostname);
  
     if ((sockfd = open_rawsock()) < 0)
         return -1;
