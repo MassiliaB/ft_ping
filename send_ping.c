@@ -86,10 +86,6 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
 
             // if packet was not sent, don't receive
             if (pckt_sent) {
-                if (!(hdr_s_pckt.icmp_type == 0 && hdr_s_pckt.icmp_code == 0)) {
-                     printf(" Error..Packet receive with ICMP type %d code %d\n", hdr_s_pckt.icmp_type, hdr_s_pckt.icmp_code);
-                }
-                else {
                     printf("%d bytes from %s (%s): icmp seq=%d ttl=%d time=%Lf ms\n", PING_PKT_S, ping_domain, ip_addr, msg_count, ttl_val, rtt_msec);
                     msg_received_count++;
                 }
