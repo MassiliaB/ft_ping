@@ -2,7 +2,7 @@
 
 int open_rawsock()
 {
-    int sockfd;
+    int sockfd; //Raw socket - if you use IPPROTO_ICMP, then kernel will fill in the correct ICMP header checksum, if IPPROTO_RAW, then it wont
     sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     // To open a socket, you need the socket family, the socket type and protocol
 
@@ -17,7 +17,7 @@ int open_rawsock()
 int main(int ac, char **av)
 {
     int     sockfd;
-    struct  sockaddr_in ping_addr; // ? 
+    struct  sockaddr_in dest_addr; // ? 
   //  char    *options;
     char    *ip_addr;
     char    *reverse_hostname; // To convert ip addr to hostname
@@ -31,7 +31,7 @@ int main(int ac, char **av)
         printf("usage: ping [-v][-?] ‹Hostname or IP>\n");
         return 0;
     }
-    if (!(ip_addr = dns_lookup(av[1], &ping_addr))){
+    if (!(ip_addr = dns_lookup(av[1], &dest_addr))){
         printf("DNS lookup failed: could not resolve hostname !\n");
         return 0;
     }
@@ -42,6 +42,6 @@ int main(int ac, char **av)
     if ((sockfd = open_rawsock()) < 0)
         return -1;
     signal(SIGINT, intHandler); // catching interrupt
-    send_ping(sockfd, &ping_addr, reverse_hostname, ip_addr, av[1]);
+    send_ping(sockfd, &dest_addr, reverse_hostname, ip_addr, av[1]);
     return 0;
 }

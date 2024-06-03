@@ -11,13 +11,12 @@ char    *dns_lookup(char *hostname, struct sockaddr_in *ping_addr)
         printf("Error Dns lookup : %s\n", strerror(errno));
         return 0;
     }
- 
+
     // filling up address structure
     strcpy(ip, inet_ntoa(*(struct in_addr*)host_entity->h_addr));
     (*ping_addr).sin_family = host_entity->h_addrtype;
     (*ping_addr).sin_port = htons(PORT_NO);
     (*ping_addr).sin_addr.s_addr = *(long*)host_entity->h_addr;
-    // printf("Resolving DNS : %s\n", ip);
     return ip;
 }
 
@@ -40,6 +39,5 @@ char    *reverse_dns_lookup(char *ip_addr)
     }
     ret_buf = (char*)malloc((strlen(buf) + 1) * sizeof(char));
     strcpy(ret_buf, buf);
-    // printf("Resverse DNS : %s\n", ret_buf);
     return ret_buf;
 }

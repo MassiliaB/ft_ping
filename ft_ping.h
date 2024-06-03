@@ -22,6 +22,10 @@
 #define NI_MAXHOST      1025
 #define NI_MAXSERV      32
 
+#define DATALEN         56
+#define IPMAXLEN        60
+#define ICMPMAXLEN      76
+
 char    *reverse_dns_lookup(char *ip_addr);
 char    *dns_lookup(char *hostname, struct sockaddr_in *addr_connexion);
 void    send_ping(int raw_sockfd, struct sockaddr_in *addr_con, char *ping_domain, char *ping_ip, char *rev_host);
