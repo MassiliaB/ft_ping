@@ -40,7 +40,6 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
     int                 pckt_sent;
     int                 msg_count;
     int                 msg_received_count;
-    char        r_buffer[4096]; //receive buffer
     char        s_buffer[4096]; //receive buffer
     long double rtt_msec;
     long double total_msec;
@@ -53,7 +52,6 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
     msg_received_count = 0;
 
     bzero(&hdr_s_pckt, sizeof(hdr_s_pckt)); // filling packet
-    memset(r_buffer, 0, sizeof(r_buffer));
     while (pingloop) {
         pckt_sent = 1; //was a packet sent or not
 
@@ -73,6 +71,8 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
         }
        // bzero(&hdr_r_pckt, sizeof(hdr_r_pckt));
         // receive packet
+        char        r_buffer[4096]; //receive buffer
+        memset(r_buffer, 0, sizeof(r_buffer));
         if (recvfrom(raw_sockfd, r_buffer, sizeof(r_buffer), 0, (struct sockaddr*)&r_addr, (socklen_t*)(sizeof(r_addr))) < 0 && msg_count > 1) {
             printf("Packet received error : %s\n", strerror(errno));
         }
