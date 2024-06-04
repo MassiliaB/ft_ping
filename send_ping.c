@@ -78,6 +78,7 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
             if (recvfrom(raw_sockfd, r_packet, sizeof(r_packet), 0, (struct sockaddr*)&r_addr, (socklen_t*)(sizeof(r_addr))) <= 0 && msg_count > 1)
                 printf("Packet received error : %s\n", strerror(errno));
             else {
+                                printf("alive ? %d\n", hdr_r_pckt->icmp_type);
                 clock_gettime(CLOCK_MONOTONIC, &time_end);
                 double timeElapsed = ((double)(time_end.tv_nsec - time_start.tv_nsec)) / 1000000.0;
                 rtt_msec = (time_end.tv_sec - time_start.tv_sec) * 1000.0 + timeElapsed;
