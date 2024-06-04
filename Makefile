@@ -1,6 +1,6 @@
 NAME = ft_ping
 
-SRCS =	ft_ping.c send_ping.c dns_resolve.c
+SRCS =	src/ft_ping.c src/send_ping.c src/dns_resolve.c
 
 OBJS = $(SRCS:.c=.o)
 
