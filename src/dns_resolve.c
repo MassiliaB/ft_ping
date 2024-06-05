@@ -1,19 +1,18 @@
 #include "../includes/ft_ping.h"
 
-// Performs a DNS lookup
+// Performs a DNS lookup to get IP adresse
 char    *dns_lookup(char *hostname, struct sockaddr_in *ping_addr)
 {
     struct hostent  *host_entity;
     char            *ip;
 
-    ip = (char*)malloc(NI_MAXHOST * sizeof(char));
     if (!(host_entity = gethostbyname(hostname))) {
         printf("Error Dns lookup : %s\n", strerror(errno));
         return 0;
     }
-
     // filling up address structure
-    strcpy(ip, inet_ntoa(*(struct in_addr*)host_entity->h_addr));
+    ip = (char*)malloc(NI_MAXHOST * sizeof(char));
+    strcpy(ip, inet_ntoa(*(struct in_addr*)host_entity->h_addr)); // convertit l'addr en une string format ipv4
     (*ping_addr).sin_family = host_entity->h_addrtype;
     (*ping_addr).sin_port = htons(PORT_NO);
     (*ping_addr).sin_addr.s_addr = *(long*)host_entity->h_addr;

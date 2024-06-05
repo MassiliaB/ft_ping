@@ -37,5 +37,7 @@ int main(int ac, char **av)
         return -1;
     signal(SIGINT, intHandler); // catching interrupt
     send_ping(sockfd, &dest_addr, reverse_hostname, ip_addr, av[1]);
+    free(ip_addr);
+    free(reverse_hostname);
     return 0;
 }
