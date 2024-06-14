@@ -58,8 +58,17 @@ int receive_packet(int raw_sockfd)
     memset(r_packet, 0, sizeof(&r_packet));
     ip = (struct ip*)r_packet;
     iphlen = ip->ip_hl << 2; //calculate the lenght of the IP header in bytes
+    ip->ip_v = 4;
+    ip->ip_hl = 5;
+    ip->ip_tos = 0;
+    ip->ip_len = iphlen;
+    ip->ip_id = htons(321);
+    ip->ip_off = htons(0);
+    ip->ip_ttl = 255;
+    ip->ip_p = IPPROTO_ICMP;
+    ip->ip_sum = 0;
     hdr_r_pckt = (struct icmp*)(r_packet + iphlen);
-    if ((len = recvfrom(raw_sockfd, r_packet, sizeof(r_packet), 0, (struct sockaddr*)&r_addr, (socklen_t*)(sizeof(r_addr)))) < 0)
+    if ((len = recvfrom(raw_sockfd, hdr_r_pckt, sizeof(hdr_r_pckt), 0, (struct sockaddr*)&r_addr, (socklen_t*)(sizeof(r_addr)))) < 0)
         printf("Packet received error : %s\n", strerror(errno));
     else {
         len -= iphlen;
@@ -136,6 +145,12 @@ void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_doma
     if (setsockopt(raw_sockfd, IPPROTO_IP, IP_TTL, &ttl_val, sizeof(ttl_val))!= 0) {
          printf("Setting socket options to TTL failed !\n");
          return;
+    }
+    /* Socket options, tell the kernel we provide the IP structure */
+    if(setsockopt(raw_sockfd, IPPROTO_IP, IP_HDRINCL, &ttl_val, sizeof(ttl_val)) < 0)
+    {
+        printf("Setting socket options for IP_HDRINCL failed !\n");
+        return;
     }
     // setting timeout delay of recv setting
     setsockopt(raw_sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv_out, sizeof tv_out);
