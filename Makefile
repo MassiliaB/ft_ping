@@ -6,23 +6,24 @@ OBJS = $(SRCS:.c=.o)
 
 CC = gcc
 
-CFLAGS	= -Wall -Wextra -Werror -I.
+CFLAGS = -Wall -Wextra -Werror -I.
 
 RM = rm -f
 
-.c.o =  ${CC} ${CFLAGS} -c $< -o ${$<.c=.o}
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(NAME): ${OBJS}
+$(NAME): $(OBJS)
+	$(CC) $(CFLAGS) -o $(NAME) $(OBJS)
 
-all: ${NAME}
+all: $(NAME)
 
-clean: 
-	${RM} ${OBJS}
+clean:
+	$(RM) $(OBJS)
 
 fclean: clean
-	${RM} ${NAME} 
+	$(RM) $(NAME)
 
 re: fclean all
-	echo `clear`
 
 .PHONY: all clean fclean re
