@@ -1,5 +1,27 @@
 #include "../includes/ft_ping.h"
 
+#include <stdint.h>
+
+// Fonction pour calculer le checksum
+uint16_t checksum(void *addr, int len) {
+    uint16_t *buf = addr;
+    uint32_t sum = 0;
+    uint16_t result;
+
+    for (; len > 1; len -= 2) {
+        sum += *buf++;
+    }
+    if (len == 1) {
+        sum += *(uint8_t *)buf;
+    }
+
+    sum = (sum >> 16) + (sum & 0xFFFF);
+    sum += (sum >> 16);
+    result = ~sum;
+    return result;
+}
+
+
 int open_rawsock()
 {
     int sockfd; //Raw socket - if you use IPPROTO_ICMP, then kernel will fill in the correct ICMP header checksum, if IPPROTO_RAW, then it wont
@@ -36,6 +58,7 @@ int main(int ac, char **av)
     if ((sockfd = open_rawsock()) < 0)
         return -1;
     signal(SIGINT, intHandler); // catching interrupt
+   // signal(SIGALRM, intAlarm);
     send_ping(sockfd, &dest_addr, reverse_hostname, ip_addr, av[1]);
     free(ip_addr);
     free(reverse_hostname);
