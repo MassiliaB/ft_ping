@@ -1,6 +1,5 @@
 #include "../includes/ft_ping.h"
-#include <time.h>
-int pingloop = 1;
+int         pingloop = 1;
 char        s_packet[sizeof(struct icmp) + DATALEN];
 char        r_packet[PACKET_SIZE];
 

@@ -13,6 +13,7 @@
 #include <netpacket/packet.h>
 #include <errno.h>
 #include <stdint.h>
+#include <time.h>
 
 #define PING_PKT_S 64 // ping packet size
 #define PORT_NO 0 // Automatic port number
