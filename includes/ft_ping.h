@@ -12,8 +12,7 @@
 #include <signal.h>
 #include <netpacket/packet.h>
 #include <errno.h>
-//#include <linux/time.h>
-//#include <ip.h>
+#include <stdint.h>
 
 #define PING_PKT_S 64 // ping packet size
 #define PORT_NO 0 // Automatic port number
@@ -22,7 +21,7 @@
 #define NI_MAXHOST      1025
 #define NI_MAXSERV      32
 
-#define DATALEN         56
+#define DATALEN         20
 #define IPMAXLEN        60
 #define ICMPMAXLEN      76
 #define PACKET_SIZE 1024
