@@ -89,14 +89,15 @@ void icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec *t
         }
     }
     clock_gettime(CLOCK_MONOTONIC, tfe);
-    timeElapsed = ((double)(tfe->tv_nsec - tfs->tv_nsec)) / 1000000.0;
-    total_msec = (tfe->tv_sec - tfs->tv_sec) * 1000.0 + timeElapsed;
+    timeElapsed = ((double)(tfe->tv_nsec - tfs->tv_nsec)) / 1000000;
+    total_msec = (tfe->tv_sec - tfs->tv_sec) * 1000 + timeElapsed;
     printf("--- %s ping statistics ---\n", argv);
-    printf("%d packets transmitted, %d received, %.2f%% packet loss, time %Lfms\n", msg_count, msg_received_count, ((msg_count - msg_received_count) / (double)msg_count) * 100.0, total_msec);
+    printf("%d packets transmitted, %d received, %.2f%% packet loss, time %Lfms\n", msg_count, msg_received_count, ((msg_count - msg_received_count) / (double)msg_count) * 100, total_msec);
+    // printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", rtt_min, rtt_avg, rtt_max, rtt_mdev);
     close(raw_sockfd);
 }//affichage  + rtt 
 
-void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_domain, char *ip_addr, char *argv)
+void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_domain, char *ip_addr, char *argv, int on)
 {
     struct timespec     tfs;
     struct timespec     tfe;
@@ -118,6 +119,11 @@ void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_doma
     }
     // setting timeout delay of recv setting
     setsockopt(raw_sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv_out, sizeof(tv_out));
+    (void)on;
+    // if (setsockopt(raw_sockfd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0) {
+    //     perror("setsockopt failed");
+    //     exit(EXIT_FAILURE);
+    // }
     printf("PING %s(%s) %d() bytes of data.\n", argv, ip_addr, DATALEN);
     // send icmp packet in an infinite loop
     icmp_loop(raw_sockfd, ping_addr, &tfs, &tfe, argv, ip_addr, ttl_val, ping_domain);
