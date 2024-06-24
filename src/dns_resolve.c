@@ -40,3 +40,5 @@ char    *reverse_dns_lookup(char *ip_addr)
     strcpy(ret_buf, buf);
     return ret_buf;
 }
+//ttl 64
+//affichage time

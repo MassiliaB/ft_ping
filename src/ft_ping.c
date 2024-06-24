@@ -1,7 +1,5 @@
 #include "../includes/ft_ping.h"
 
-#include <stdint.h>
-
 // Fonction pour calculer le checksum
 uint16_t checksum(void *addr, int len) {
     uint16_t *buf = addr;
