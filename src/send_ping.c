@@ -75,6 +75,7 @@ void icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec *t
 
     total_msec = 0;
     rtt_msec = 0;
+    long double rtt_min = 1e18, rtt_max = 0, rtt_sum = 0, rtt_sum_sq = 0;
     while (pingloop) {
         if (!send_packet(++msg_count, raw_sockfd, ping_addr, &time_start))
             return;
@@ -83,6 +84,10 @@ void icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec *t
                 clock_gettime(CLOCK_MONOTONIC, &time_end);
                 timeElapsed = ((double)(time_end.tv_nsec - time_start.tv_nsec)) / 1000000.0;
                 rtt_msec = (time_end.tv_sec - time_start.tv_sec) * 1000.0 + timeElapsed;
+                if (rtt_msec < rtt_min) rtt_min = rtt_msec;
+                if (rtt_msec > rtt_max) rtt_max = rtt_msec;
+                rtt_sum += rtt_msec;
+                rtt_sum_sq += rtt_msec * rtt_msec;
                 printf("%d bytes from %s (%s): icmp_seq=%d ttl=%d time=%Lf ms\n", PING_PKT_S, ping_domain, ip_addr, msg_count, ttl_val, rtt_msec);
                 msg_received_count++;
             }
@@ -91,9 +96,12 @@ void icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec *t
     clock_gettime(CLOCK_MONOTONIC, tfe);
     timeElapsed = ((double)(tfe->tv_nsec - tfs->tv_nsec)) / 1000000;
     total_msec = (tfe->tv_sec - tfs->tv_sec) * 1000 + timeElapsed;
+    long double rtt_avg = rtt_sum / msg_received_count;
+    long double rtt_mdev = sqrt((rtt_sum_sq / msg_received_count) - (rtt_avg * rtt_avg));
+
     printf("--- %s ping statistics ---\n", argv);
     printf("%d packets transmitted, %d received, %.2f%% packet loss, time %Lfms\n", msg_count, msg_received_count, ((msg_count - msg_received_count) / (double)msg_count) * 100, total_msec);
-    // printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", rtt_min, rtt_avg, rtt_max, rtt_mdev);
+    printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", rtt_min, rtt_avg, rtt_max, rtt_mdev);
     close(raw_sockfd);
 }//affichage  + rtt 
 
@@ -128,4 +136,3 @@ void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_doma
     // send icmp packet in an infinite loop
     icmp_loop(raw_sockfd, ping_addr, &tfs, &tfe, argv, ip_addr, ttl_val, ping_domain);
 }
- 
