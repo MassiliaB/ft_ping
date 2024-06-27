@@ -4,6 +4,8 @@ SRCS =	src/ft_ping.c src/send_ping.c src/dns_resolve.c
 
 OBJS = $(SRCS:.c=.o)
 
+LDFLAGS = -lm
+
 CC = gcc
 
 CFLAGS = -Wall -Wextra -Werror -I.
@@ -14,7 +16,7 @@ RM = rm -f
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(NAME): $(OBJS)
-	$(CC) $(CFLAGS) -o $(NAME) $(OBJS)
+	$(CC) $(CFLAGS) -o $(NAME) $(OBJS) $(LDFLAGS)
 
 all: $(NAME)
 
