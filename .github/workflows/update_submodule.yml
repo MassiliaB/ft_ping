@@ -1,33 +1,42 @@
-name: Update Submodule
+name: Submodule Updates
+
+#############################
+# Start the job on all push #
+#############################
 on:
-  repository_dispatch:
-    types:
-      - update-submodule
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+###############
+# Set the Job #
+###############
 jobs:
-  update-submodule:
+  update:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
+    env:
+      PARENT_REPOSITORY: 'MassiliaB/ft_ping'
+      CHECKOUT_BRANCH: 'main'
+      PR_AGAINST_BRANCH: 'main'
+      OWNER: 'MassiliaB'
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      ##########################
+      # Checkout the code base #
+      ##########################
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      ####################################
+      # Run the action against code base #
+      ####################################
+      - name: run action
+        id: run_action
+        uses: MassiliaB/CybersecurityPool
         with:
-          token: ${{ secrets.PAT }}
-          submodules: recursive
-      - name: Authorize Git
-        run: |
-          git config --global user.email "massblri@gmail.com"
-          git config --global user.name "massiliab"
-      - name: Update submodule
-        run: |
-          git submodule update  --init --recursive --remote -f
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
-      - name: Commit changes
-        run: |
-          git add writings
-          git commit -m "Update submodule to latest commit"
-          git push origin main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.UPDATE_SECRET }}
+          parent_repository: ${{ env.PARENT_REPOSITORY }}
+          checkout_branch: ${{ env.CHECKOUT_BRANCH}}
+          pr_against_branch: ${{ env.PR_AGAINST_BRANCH }}
+          owner: ${{ env.OWNER }}
