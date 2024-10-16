@@ -33,7 +33,7 @@ jobs:
       ####################################
       - name: run action
         id: run_action
-        uses: MassiliaB/CybersecurityPool
+        uses: releasehub-com/github-action-create-pr-parent-submodule@v1
         with:
           github_token: ${{ secrets.UPDATE_SECRET }}
           parent_repository: ${{ env.PARENT_REPOSITORY }}
