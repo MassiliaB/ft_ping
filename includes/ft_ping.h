@@ -16,12 +16,12 @@
 
 #define PING_PKT_S 64 // ping packet size
 #define PORT_NO 0 // Automatic port number
-#define PING_SLEEP_RATE 1000000 // Automatic port number
+#define PING_SLEEP_RATE 1000000  // Automatic port number
 #define RECV_TIMEOUT 1 // Timeout delay for receiving packets in seconds
 #define NI_MAXHOST      1025
 #define NI_MAXSERV      32
 
-#define DATALEN         56
+#define DATALEN         64
 #define IPMAXLEN        60
 #define ICMPMAXLEN      76
 #define PACKET_SIZE 1024

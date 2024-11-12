@@ -1,31 +1,30 @@
 #include "../includes/ft_ping.h"
 #include <time.h>
+
 int pingloop = 1;
-char        s_packet[sizeof(struct icmp) + DATALEN];
+char        s_packet[DATALEN];
 char        r_packet[PACKET_SIZE];
 
-void intHandler() // When CTRL + C is pressed, ping send a report and set the pingloop to false.
+void intHandler()
 {
     pingloop = 0;
 }
 
 int send_packet(int msg_count, int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec *time_start)
 {
-    struct icmp *hdr_s_pckt; //ICMP packet header
-    int         packsize;
+    struct icmp *icmp = (struct icmp *) s_packet;
+    memset(s_packet, 0, DATALEN);
 
-    hdr_s_pckt = (struct icmp*)s_packet;
-    hdr_s_pckt->icmp_type = ICMP_ECHO; // Message Type (8 bits)
-    hdr_s_pckt->icmp_code = 0; // Message Code (8 bits): echo request
-    hdr_s_pckt->icmp_cksum = 0;
-    hdr_s_pckt->icmp_seq = htons(msg_count); // Sequence Number (16 bits): starts at 0
-    hdr_s_pckt->icmp_id = htons(getpid()); // Identifier (16 bits): some number to trace the response
-    //htons est nécessaire pour assurer la compatibilité des données multi-octets entre machines avec des ordres de byte différents (endianness)
-
-    hdr_s_pckt->icmp_cksum = checksum(s_packet, sizeof(struct icmp) + DATALEN);
-    packsize = sizeof(struct icmp) + DATALEN;
+    icmp->icmp_type = ICMP_ECHO; // Message Type (8 bits)
+    icmp->icmp_code = 0; // Message Code (8 bits): echo request
+    icmp->icmp_cksum = 0;
+    icmp->icmp_seq = htons(msg_count); // Sequence Number (16 bits): starts at 0
+    icmp->icmp_id = htons(getpid()); // Identifier (16 bits): some number to trace the response
+    
+    memcpy(s_packet + sizeof(struct icmp), "AAAA", 4);
+    icmp->icmp_cksum = checksum(s_packet, DATALEN);
     clock_gettime(CLOCK_MONOTONIC, time_start);
-    if ((sendto(raw_sockfd, s_packet, packsize, 0, (struct sockaddr*)ping_addr, sizeof(*ping_addr))) < 0) {
+    if ((sendto(raw_sockfd, s_packet, DATALEN, 0, (struct sockaddr*)ping_addr, sizeof(struct sockaddr_in))) < 0) {
         printf("Packet sent error : %s\n", strerror(errno));
         return 0;
     }
@@ -33,7 +32,7 @@ int send_packet(int msg_count, int raw_sockfd, struct sockaddr_in *ping_addr, st
     return 1;
 }
 
-int receive_packet(int raw_sockfd)
+int recieve_packet(int raw_sockfd, int *ttl_val)
 {
     struct sockaddr_in  r_addr;
     struct icmp   *hdr_r_pckt;
@@ -44,11 +43,12 @@ int receive_packet(int raw_sockfd)
 
     memset(r_packet, 0, PACKET_SIZE);
     if ((len = recvfrom(raw_sockfd, r_packet, PACKET_SIZE, 0, (struct sockaddr*)&r_addr, &addr_len)) < 0){
-        printf("Packet received error : %s\n", strerror(errno));
+        printf("Packet recieved error : %s\n", strerror(errno));
         return 0;
     }
     ip = (struct ip*)r_packet;
     iphlen = ip->ip_hl << 2; //calculate the lenght of the IP header in bytes
+    *ttl_val = ip->ip_ttl;
     if (len < (ssize_t)(iphlen + sizeof(struct icmp))) {
         printf("ICMP packet's length is less than expected\n");
         return 0;
@@ -65,34 +65,34 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
 {
     struct      timespec time_start;
     struct      timespec time_end;
-    long double total_msec;
-    long double rtt_msec;
-    double      timeElapsed;
+    long  rtt_msec;
+    int      timeElapsed;
     int         msg_count;
     int         msg_received_count;
 
-    total_msec = 0;
     msg_count = 0;
     msg_received_count = 0;
     rtt_msec = 0;
+    signal(SIGINT, intHandler);
     while (pingloop) {
-        if (!send_packet(msg_count++, raw_sockfd, ping_addr, &time_start))
+        if (!send_packet(++msg_count, raw_sockfd, ping_addr, &time_start))
             return ;
-        while (msg_received_count < msg_count){
-            if (receive_packet(raw_sockfd)){
+        printf("rcv count = %d, msg count %d\n", msg_received_count, msg_count);
+        while (msg_received_count < msg_count && pingloop){
+            if (recieve_packet(raw_sockfd, &ttl_val)){
                 clock_gettime(CLOCK_MONOTONIC, &time_end);
-                double timeElapsed = ((double)(time_end.tv_nsec - time_start.tv_nsec)) / 1000000.0;
-                rtt_msec = (time_end.tv_sec - time_start.tv_sec) * 1000.0 + timeElapsed;
-                printf("%d bytes from %s (%s): icmp seq=%d ttl=%d time=%Lf ms\n", PING_PKT_S, ping_domain, ip_addr, msg_count, ttl_val, rtt_msec);
+                rtt_msec = (time_end.tv_nsec - time_start.tv_nsec) / 1000000;
+                rtt_msec += (time_end.tv_sec - time_start.tv_sec) * 1000;
+                printf("%d bytes from %s (%s): icmp seq=%d ttl=%d time=%ld ms\n", PING_PKT_S, ping_domain, ip_addr, msg_count, ttl_val, rtt_msec);
                 msg_received_count++;
             }
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &(*tfe));
-    timeElapsed = ((double)(tfe->tv_nsec - tfs->tv_nsec)) / 1000000.0;
-    total_msec = (tfe->tv_sec - tfs->tv_sec) * 1000.0 + timeElapsed;
+    timeElapsed = (tfe->tv_nsec - tfs->tv_nsec) / 1000000 ;
+    timeElapsed += (tfe->tv_sec - tfs->tv_sec) * 1000;
     printf("--- %s ping statistics ---\n", argv);
-    printf("%d packets transmitted, %d received, %f%% packet loss, time %Lfms\n", msg_count, msg_received_count, ((msg_count - msg_received_count) / msg_count) * 100.0, total_msec);
+    printf("%d packets transmitted, %d received, %d%% packet loss, time %dms\n", msg_count, msg_received_count, ((msg_count - msg_received_count) / msg_count) * 100, timeElapsed);
     close(raw_sockfd);
 }
 
@@ -103,28 +103,17 @@ void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_doma
     struct timeval      tv_out;
     int                 ttl_val;
 
-    ttl_val = 64; //ttl that will decrease 
+    (void) on;
+    ttl_val = 255; 
     tv_out.tv_sec = RECV_TIMEOUT;
     tv_out.tv_usec = 0;
-    clock_gettime(CLOCK_MONOTONIC, &tfs); // get time data
-    /* Now we create the packet that we send down the wire
-     * Since we use IPPROTO_ICMP in socket(), we just have to create the
-     * ICMP packet
-     */
-    // setting TTL to controle the range of the packets
+    clock_gettime(CLOCK_MONOTONIC, &tfs); 
     if (setsockopt(raw_sockfd, IPPROTO_IP, IP_TTL, &ttl_val, sizeof(ttl_val))!= 0) {
          printf("Setting socket options to TTL failed !\n");
          return;
     }
-    // setting timeout delay of recv setting
     setsockopt(raw_sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv_out, sizeof(tv_out));
-    if (setsockopt(raw_sockfd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0) {
-        perror("setsockopt failed");
-        exit(EXIT_FAILURE);
-    }
     printf("PING %s(%s): %d bytes of data.\n", argv, ip_addr, DATALEN);
-
-    // send icmp packet in an infinite loop
     icmp_loop(raw_sockfd, ping_addr, &tfs, &tfe, argv, ip_addr, ttl_val, ping_domain);
 }
  

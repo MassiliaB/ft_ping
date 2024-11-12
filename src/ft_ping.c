@@ -1,6 +1,5 @@
 #include "../includes/ft_ping.h"
 
-// Fonction pour calculer le checksum
 uint16_t checksum(void *addr, int len) {
     uint16_t *buf = addr;
     uint32_t sum = 0;
@@ -22,9 +21,8 @@ uint16_t checksum(void *addr, int len) {
 
 int open_rawsock()
 {
-    int sockfd; //Raw socket - if you use IPPROTO_ICMP, then kernel will fill in the correct ICMP header checksum, if IPPROTO_RAW, then it wont
+    int sockfd;
     sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-
     if (sockfd == -1) {
         printf("Error creating socket : %s\n", strerror(errno));
         return -1;
@@ -77,7 +75,7 @@ int main(int ac, char **av)
     int     verbose;
     char    *addr;
     char    *ip_addr;
-    char    *reverse_hostname; // To convert ip addr to hostname
+    char    *reverse_hostname;
 
     verbose = 0;
     addr = NULL;
@@ -98,8 +96,7 @@ int main(int ac, char **av)
     reverse_hostname = reverse_dns_lookup(ip_addr); 
     if ((sockfd = open_rawsock()) < 0)
         return -1;
-    signal(SIGINT, intHandler); // catching interrupt
-    send_ping(sockfd, &dest_addr, reverse_hostname, ip_addr, addr, verbose);
+    send_ping(sockfd, &dest_addr, reverse_hostname, ip_addr, addr, 1);
     free(addr);
     free(ip_addr);
     free(reverse_hostname);
