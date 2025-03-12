@@ -30,7 +30,8 @@
 
 char    *reverse_dns_lookup(char *ip_addr);
 char    *dns_lookup(char *hostname, struct sockaddr_in *addr_connexion);
-void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_domain, char *ip_addr, char *argv);
+void    init_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_domain, char *ip_addr, char *argv);
 void    intHandler();
-unsigned short  checksum(void *addr, int len);
 int     open_rawsock();
+int     parse_args(char **av, int ac, char **addr);
+unsigned short  checksum(void *addr, int len);
