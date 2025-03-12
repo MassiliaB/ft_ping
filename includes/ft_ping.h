@@ -13,6 +13,8 @@
 #include <netpacket/packet.h>
 #include <errno.h>
 #include <stdint.h>
+#include <math.h>
+#include <limits.h>
 
 #define PING_PKT_S 64 // ping packet size
 #define PORT_NO 0 // Automatic port number
@@ -28,6 +30,7 @@
 
 char    *reverse_dns_lookup(char *ip_addr);
 char    *dns_lookup(char *hostname, struct sockaddr_in *addr_connexion);
-void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_domain, char *ip_addr, char *argv, int verbose);
+void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_domain, char *ip_addr, char *argv);
 void    intHandler();
-unsigned short checksum(void *addr, int len);
+unsigned short  checksum(void *addr, int len);
+int     open_rawsock();

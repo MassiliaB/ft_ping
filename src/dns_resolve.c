@@ -7,7 +7,7 @@ char    *dns_lookup(char *hostname, struct sockaddr_in *ping_addr)
     char            *ip;
 
     if (!(host_entity = gethostbyname(hostname))) {
-        printf("Error Dns lookup : %s\n", strerror(errno));
+        printf("ping: Dns lookup\n");
         return 0;
     }
     // filling up address structure
@@ -33,11 +33,10 @@ char    *reverse_dns_lookup(char *ip_addr)
 
     if (getnameinfo((struct sockaddr*)&temp_addr, len, buf, sizeof(buf), NULL, 0, NI_NAMEREQD))
     {
-        printf("Error reverse Dns lookup : %s\n", strerror(errno));
+        printf("ping: Reverse Dns lookup\n");
         return NULL;
     }
     ret_buf = (char*)malloc((strlen(buf) + 1) * sizeof(char));
     strcpy(ret_buf, buf);
     return ret_buf;
 }
-//ttl 64
