@@ -10,21 +10,16 @@ void intHandler()
 {
     pingloop = 0;
 }
+void	print_icmp_header(struct icmphdr *icmp, uint32_t size) {
+	printf("ICMP: type %u, code %u, size %u", icmp->type, icmp->code, size);
+	if (icmp->type == ICMP_ECHO || icmp->type == ICMP_ECHOREPLY) {
+		printf(", id 0x%04x, seq 0x%04x", icmp->un.echo.id, icmp->un.echo.sequence);
+	}
+	printf("\n");
+}
 
 int send_packet(int msg_count, int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec *time_start)
 {
-    struct icmp *icmp = (struct icmp *) s_packet;
-    memset(s_packet, 0, DATALEN);
-
-    icmp->icmp_type = ICMP_ECHO; // Message Type (8 bits)
-    icmp->icmp_code = 0; // Message Code (8 bits): echo request
-    icmp->icmp_cksum = 0;
-    icmp->icmp_seq = htons(msg_count); // Sequence Number (16 bits): starts at 0
-    icmp->icmp_id = htons(getpid()); // Identifier (16 bits): some number to trace the response
-    
-    memcpy(s_packet + sizeof(struct icmp), "AAAA", 4);
-    icmp->icmp_cksum = checksum(s_packet, DATALEN);
-    clock_gettime(CLOCK_MONOTONIC, time_start);
     if ((sendto(raw_sockfd, s_packet, DATALEN, 0, (struct sockaddr*)ping_addr, sizeof(struct sockaddr_in))) < 0) {
         printf("ping: Packet sent error\n");
         return 0;
@@ -66,7 +61,7 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
 {
     struct  timespec time_start;
     struct  timespec time_end;
-    long    rtt_msec;
+    double    rtt_msec;
     int     timeElapsed;
     int     msg_count;
     int     msg_received_count;
@@ -74,10 +69,10 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
     msg_count = 0;
     msg_received_count = 0;
     rtt_msec = 0;
-    long min_rtt = LONG_MAX;
-    long max_rtt = 0;
-    long sum_rtt = 0;
-    long sum_rtt2 = 0;
+    double min_rtt = LONG_MAX;
+    double max_rtt = 0.0;
+    double sum_rtt = 0.0;
+    double sum_rtt2 = 0.0;
     signal(SIGINT, intHandler);
     while (pingloop) {
         if (!send_packet(++msg_count, raw_sockfd, ping_addr, &time_start))
@@ -86,9 +81,9 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
         while (msg_received_count < msg_count && pingloop){
             if (recieve_packet(raw_sockfd, &ttl_val)){
                 clock_gettime(CLOCK_MONOTONIC, &time_end);
-                rtt_msec = (time_end.tv_nsec - time_start.tv_nsec) / 1000000;
-                rtt_msec += (time_end.tv_sec - time_start.tv_sec) * 1000;
-                printf("%d bytes from %s (%s): icmp seq=%d ttl=%d time=%ld ms\n", PING_PKT_S, ping_domain, ip_addr, msg_count, ttl_val, rtt_msec);
+                rtt_msec = (time_end.tv_nsec - time_start.tv_nsec) / 1000.0;
+                rtt_msec += (time_end.tv_sec - time_start.tv_sec) * 100;
+                printf("%d bytes from %s (%s): icmp seq=%d ttl=%d time=%.3f ms\n", PING_PKT_S, ping_domain, ip_addr, msg_count, ttl_val, rtt_msec);
                 if (rtt_msec < min_rtt) min_rtt = rtt_msec;
                 if (rtt_msec > max_rtt) max_rtt = rtt_msec;
                 
@@ -99,38 +94,47 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, struct timespec
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &(*tfe));
-    timeElapsed = (tfe->tv_nsec - tfs->tv_nsec) / 1000000 ;
+    timeElapsed = (tfe->tv_nsec - tfs->tv_nsec) / 1000.0 ;
     timeElapsed += (tfe->tv_sec - tfs->tv_sec) * 1000;
     
     printf("--- %s ping statistics ---\n", argv);
-    printf("%d packets transmitted, %d received, %.2f%% packet loss, time %dms\n", msg_count, msg_received_count, ((msg_count - msg_received_count) / msg_count) * 100.0, timeElapsed);
+    printf("%d packets transmitted, %d received, %.f%% packet loss, time %dms\n", msg_count, msg_received_count, ((msg_count - msg_received_count) * 100.0) / msg_count, timeElapsed);
     if (msg_received_count) {
         double avg_rtt = (msg_received_count > 0) ? ((double)sum_rtt / msg_received_count) : 0;
-        double mdev_rtt = 0;
+        double mdev_rtt = 0.0;
         mdev_rtt = sqrt(((double)sum_rtt2 / msg_received_count) - (avg_rtt * avg_rtt));
         printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n",
-            (double)min_rtt, avg_rtt, (double)max_rtt, mdev_rtt);    
+            min_rtt, avg_rtt, max_rtt, mdev_rtt);    
     }
     close(raw_sockfd);
 }
 
-void    send_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_domain, char *ip_addr, char *argv)
+void    init_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ping_domain, char *ip_addr, char *argv)
 {
-    struct timespec     tfs;
-    struct timespec     tfe;
     struct timeval      tv_out;
     int                 ttl_val;
+    struct icmp *icmp = (struct icmp *) s_packet;
 
-    ttl_val = 255; 
-    tv_out.tv_sec = RECV_TIMEOUT;
-    tv_out.tv_usec = 0;
-    clock_gettime(CLOCK_MONOTONIC, &tfs); 
+    ttl_val = 255;
+    memset(s_packet, 0, DATALEN);
     if (setsockopt(raw_sockfd, IPPROTO_IP, IP_TTL, &ttl_val, sizeof(ttl_val))!= 0) {
-         printf("ping: Setting socket options to TTL failed !\n");
-         return;
+        printf("ping: Setting socket options to TTL failed !\n");
+        return;
+   }
+   setsockopt(raw_sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv_out, sizeof(tv_out));
+   icmp.icmp_type = ICMP_ECHO; // Message Type (8 bits)
+   icmp.icmp_code = 0; // Message Code (8 bits): echo request
+   icmp.icmp_cksum = 0;
+   icmp.icmp_seq = 0; // Sequence Number (16 bits): starts at 0
+   icmp.icmp_id = htons(getpid()); // Identifier (16 bits): some number to trace the response
+   memcpy(s_packet + sizeof(struct icmp), "AAAA", 4);
+   icmp.icmp_cksum = checksum(s_packet, DATALEN);
+   tv_out.tv_sec = 1;
+
+   printf("PING %s(%s): %d bytes of data.\n", argv, ip_addr, DATALEN);
+    if (verbose){
+        printf (", id 0x%04x = %u", icmp.icmp_id, icmp.icmp_id);
     }
-    setsockopt(raw_sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv_out, sizeof(tv_out));
-    printf("PING %s(%s): %d bytes of data.\n", argv, ip_addr, DATALEN);
     icmp_loop(raw_sockfd, ping_addr, &tfs, &tfe, argv, ip_addr, ttl_val, ping_domain);
 }
  

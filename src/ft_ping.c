@@ -64,7 +64,7 @@ int main(int ac, char **av)
     reverse_hostname = reverse_dns_lookup(ip_addr); 
     if ((sockfd = open_rawsock()) < 0)
         return -1;
-    send_ping(sockfd, &dest_addr, reverse_hostname, ip_addr, addr);
+    init_ping(sockfd, &dest_addr, reverse_hostname, ip_addr, addr);
     free(addr);
     free(ip_addr);
     free(reverse_hostname);
