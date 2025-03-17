@@ -97,7 +97,6 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, char *argv, cha
             if (!sent || global->icmp_type){
                 printf("ping: ");
                 icmp_error(global->icmp_type, global->icmp_code);
-                break;
             }
             msg_received_count++;
             usleep(PING_SLEEP_RATE);
