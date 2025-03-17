@@ -43,13 +43,17 @@ typedef struct	s_params
     struct  timeval tfs;
     int     icmp_code;
     int     icmp_type;
+    int     ttl_val;
+    int     verbose;
+    char    r_packet[PACKET_SIZE];
+    char    s_packet[DATALEN];
 }				t_params;
 
 char    *reverse_dns_lookup(char *ip_addr);
 char    *dns_lookup(char *hostname, struct sockaddr_in *addr_connexion);
-void    init_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ip_addr, char *argv);
+void    init_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ip_addr, char *argv, int verbose);
 void    intHandler();
 int     open_rawsock();
 int     parse_args(char **av, int ac, char **addr);
-unsigned short  checksum(void *addr, int len);
 void    icmp_error(int type, int code);
+unsigned short  checksum(void *addr, int len);

@@ -1,7 +1,5 @@
 #include "../includes/ft_ping.h"
 
-int     verbose = 0;
-
 int parse_args(char **av, int ac, char **addr)
 {
     int opt;
@@ -12,11 +10,11 @@ int parse_args(char **av, int ac, char **addr)
     help_flag = 0;
     if (getuid() != 0){
         printf("ping: This program requires root privileges.\n");
-        return 0;
+        return -1;
     }
     if (ac < 2 || ac > 3){
         printf("ping: usage: ping [-v][-?] ‹Destination>\n");
-        return 0;
+        return -1;
     }
     while ((opt = getopt(ac, av, "v?")) != -1) {
         switch (opt) {
@@ -53,18 +51,18 @@ int main(int ac, char **av)
 {
     int     sockfd;
     struct  sockaddr_in dest_addr;
-    char    *addr;
     char    *ip_addr;
+    int     verbose = 0;
+    char    *addr = NULL;
 
-    addr = NULL;
     if ((verbose = parse_args(av, ac, &addr)) < 0)
         return 0;
     if (!(ip_addr = dns_lookup(addr, &dest_addr)))
         return 0;
     if ((sockfd = open_rawsock()) < 0)
         return -1;
-    init_ping(sockfd, &dest_addr, ip_addr, addr);
+    init_ping(sockfd, &dest_addr, ip_addr, addr, verbose);
     free(addr);
     free(ip_addr);
-    return 0;s
+    return 0;
 }
