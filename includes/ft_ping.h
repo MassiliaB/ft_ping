@@ -15,6 +15,8 @@
 #include <stdint.h>
 #include <math.h>
 #include <limits.h>
+#include <time.h>
+#include <sys/time.h>
 
 #define PING_PKT_S      64 // ping packet size
 #define PORT_NO         0 // Automatic port number
@@ -28,7 +30,7 @@
 #define ICMPMAXLEN      76
 #define PACKET_SIZE     1024
 
-typedef struct	s_global
+typedef struct	s_params
 {
 	double	min_rtt;
 	double	max_rtt;
@@ -41,7 +43,7 @@ typedef struct	s_global
     struct  timeval tfs;
     int     icmp_code;
     int     icmp_type;
-}				t_global;
+}				t_params;
 
 char    *reverse_dns_lookup(char *ip_addr);
 char    *dns_lookup(char *hostname, struct sockaddr_in *addr_connexion);

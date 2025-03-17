@@ -1,6 +1,5 @@
 #include "../includes/ft_ping.h"
-#include <time.h>
-#include <sys/time.h>
+
 int         pingloop = 1;
 char        r_packet[PACKET_SIZE];
 char        s_packet[DATALEN];
@@ -11,7 +10,7 @@ void intHandler()
     pingloop = 0;
 }
 
-int send_packet(int msg_count, int raw_sockfd, struct sockaddr_in *ping_addr, t_global *time)
+int send_packet(int msg_count, int raw_sockfd, struct sockaddr_in *ping_addr, t_params *time)
 {
     struct icmp *icmp = (struct icmp *) s_packet;
     memset(s_packet, 0, DATALEN);
@@ -30,11 +29,10 @@ int send_packet(int msg_count, int raw_sockfd, struct sockaddr_in *ping_addr, t_
         return 0;
     }
     gettimeofday(&time->start, NULL);
-   // usleep(PING_SLEEP_RATE);
     return 1;
 }
 
-int recieve_packet(int raw_sockfd, int *ttl_val, t_global *global)
+int recieve_packet(int raw_sockfd, int *ttl_val, t_params *params)
 {
     struct sockaddr_in  r_addr;
     struct icmp         *hdr_r_pckt;
@@ -48,7 +46,7 @@ int recieve_packet(int raw_sockfd, int *ttl_val, t_global *global)
         printf("ping: Packet recieved error\n");
         return 0;
     }
-    gettimeofday(&global->end, NULL);
+    gettimeofday(&params->end, NULL);
     ip = (struct ip*)r_packet;
     iphlen = ip->ip_hl << 2; 
     *ttl_val = ip->ip_ttl;
@@ -57,14 +55,14 @@ int recieve_packet(int raw_sockfd, int *ttl_val, t_global *global)
         return 0;
     }
     hdr_r_pckt = (struct icmp*)(r_packet + iphlen);
-    global->icmp_type = hdr_r_pckt->icmp_type;
-    global->icmp_code = hdr_r_pckt->icmp_code;
+    params->icmp_type = hdr_r_pckt->icmp_type;
+    params->icmp_code = hdr_r_pckt->icmp_code;
     if (!(hdr_r_pckt->icmp_type == ICMP_ECHOREPLY && hdr_r_pckt->icmp_id == htons(getpid())))
         return 2;
     return 1;
 }
 
-void    cal_rtt(t_global *time){
+void    cal_rtt(t_params *time){
     
     double res = (time->end.tv_usec - time->start.tv_usec) / 1000000.0 + (time->end.tv_sec - time->start.tv_sec);
     res *= 1000.0;
@@ -80,48 +78,49 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, char *argv, cha
 {
     int     msg_count, msg_received_count;
     int     recv;
-    t_global   global;
+    t_params   params;
 
     msg_count = 0;
     msg_received_count = 0;
-    global.min_rtt = LONG_MAX;
-    global.max_rtt = 0.0;
-    global.sum_rtt = 0.0;
-    global.sum_rtt2 = 0.0;
+    params.min_rtt = LONG_MAX;
+    params.max_rtt = 0.0;
+    params.sum_rtt = 0.0;
+    params.sum_rtt2 = 0.0;
     signal(SIGINT, intHandler);
-    gettimeofday(&global.tfs, NULL);
+    gettimeofday(&params.tfs, NULL);
     while (pingloop) {
-        if (!send_packet(++msg_count, raw_sockfd, ping_addr, &global))
+        if (!send_packet(++msg_count, raw_sockfd, ping_addr, &params))
             return ;
-        if ((recv = recieve_packet(raw_sockfd, &ttl_val, &global))){
+        if ((recv = recieve_packet(raw_sockfd, &ttl_val, &params))){
             msg_received_count++;
-            cal_rtt(&global);
+            cal_rtt(&params);
             printf("%d bytes from %s: icmp seq=%d ttl=%u time=%.2f ms",
-                PING_PKT_S, ip_addr, msg_count, ttl_val, global.rtt);
+                PING_PKT_S, ip_addr, msg_count, ttl_val, params.rtt);
             if (recv == 2)
-                printf(" type=%d code=%d", global.icmp_type, global.icmp_code);
+                printf(" type=%d code=%d", params.icmp_type, params.icmp_code);
             printf("\n");
             usleep(PING_SLEEP_RATE);
         }
     }
-    double total_time = (global.end.tv_usec - global.tfs.tv_usec) / 1000000.0 + (global.end.tv_sec - global.tfs.tv_sec);
+    double total_time = (params.end.tv_usec - params.tfs.tv_usec) / 1000000.0 + (params.end.tv_sec - params.tfs.tv_sec);
     total_time *= 1000.0;
 
     printf("--- %s ping statistics ---\n", argv);
     printf("%d packets transmitted, %d received, %.0f%% packet loss, time %.fms\n", msg_count, msg_received_count, ((msg_count - msg_received_count) * 100.0) / msg_count, total_time);
     if (msg_received_count) {
-        global.avg_rtt = global.sum_rtt / msg_received_count;
-        double mdev = sqrt((global.sum_rtt2 / msg_received_count) - (global.avg_rtt * global.avg_rtt));
+        params.avg_rtt = params.sum_rtt / msg_received_count;
+        double mdev = sqrt((params.sum_rtt2 / msg_received_count) - (params.avg_rtt * params.avg_rtt));
         printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n",
-            global.min_rtt, global.avg_rtt, global.max_rtt, mdev);    
+            params.min_rtt, params.avg_rtt, params.max_rtt, mdev);    
     }
     close(raw_sockfd);
 }
 
 void    init_ping(int raw_sockfd, struct sockaddr_in *ping_addr, char *ip_addr, char *argv)
 {
-    struct timeval      tv_out;
-    int                 ttl_val;
+    struct timeval  tv_out;
+    int             ttl_val;
+    t_params        global;
 
     ttl_val = 255;
     tv_out.tv_sec = 1;
