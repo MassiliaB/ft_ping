@@ -55,7 +55,7 @@ int main(int ac, char **av)
     struct  sockaddr_in dest_addr;
     char    *addr;
     char    *ip_addr;
-    char    *reverse_hostname;
+    // char    *reverse_hostname;
 
     addr = NULL;
     if ((verbose = parse_args(av, ac, &addr)) < 0)
@@ -63,12 +63,12 @@ int main(int ac, char **av)
     if (!(ip_addr = dns_lookup(addr, &dest_addr))){
         return 0;
     }
-    reverse_hostname = reverse_dns_lookup(ip_addr); 
+    // reverse_hostname = reverse_dns_lookup(ip_addr); 
     if ((sockfd = open_rawsock()) < 0)
         return -1;
-    init_ping(sockfd, &dest_addr, reverse_hostname, ip_addr, addr);
+    init_ping(sockfd, &dest_addr, ip_addr, addr);
     free(addr);
     free(ip_addr);
-    free(reverse_hostname);
+    // free(reverse_hostname);
     return 0;
 }
