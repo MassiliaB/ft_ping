@@ -102,13 +102,16 @@ void    icmp_loop(int raw_sockfd, struct sockaddr_in *ping_addr, char *argv, cha
             msg_received_count++;
             usleep(PING_SLEEP_RATE);
         }
+        else
+            break;
     }
     double total_time = (global->end.tv_usec - global->tfs.tv_usec) / 1000000.0 + (global->end.tv_sec - global->tfs.tv_sec);
     total_time *= 1000.0;
-
+    if (!recv)
+        total_time = 0;
     printf("--- %s ping statistics ---\n", argv);
     printf("%d packets transmitted, %d received, %.0f%% packet loss, time %.fms\n", msg_count, msg_received_count, ((msg_count - msg_received_count) * 100.0) / msg_count, total_time);
-    if (msg_received_count) {
+    if (msg_received_count && recv) {
         global->avg_rtt = global->sum_rtt / msg_received_count;
         double mdev = sqrt((global->sum_rtt2 / msg_received_count) - (global->avg_rtt * global->avg_rtt));
         printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n",
