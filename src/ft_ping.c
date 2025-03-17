@@ -57,10 +57,14 @@ int main(int ac, char **av)
 
     if ((verbose = parse_args(av, ac, &addr)) < 0)
         return 0;
-    if (!(ip_addr = dns_lookup(addr, &dest_addr)))
-        return 0;
     if ((sockfd = open_rawsock()) < 0)
-        return -1;
+        return 0;
+    if (verbose)
+        printf("ping: sock4.fd: %d (socktype: SOCK_RAW), hints.ai_family: AF_INET\n\n", sockfd);
+    if (!(ip_addr = dns_lookup(addr, &dest_addr))){
+        free(addr);
+        return 0; 
+    }  
     init_ping(sockfd, &dest_addr, ip_addr, addr, verbose);
     free(addr);
     free(ip_addr);

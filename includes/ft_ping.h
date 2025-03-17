@@ -42,6 +42,7 @@ typedef struct	s_params
     struct  timeval end;
     struct  timeval tfs;
     int     icmp_code;
+    int     id;
     int     icmp_type;
     int     ttl_val;
     int     verbose;

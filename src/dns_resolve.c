@@ -4,7 +4,7 @@ char    *dns_lookup(char *hostname, struct sockaddr_in *ping_addr)
 {
     struct hostent  *host_entity;
     char            *ip;
-
+    
     if (!(host_entity = gethostbyname(hostname))) {
         printf("ping: Temporary failure in name resolution\n");
         return 0;
